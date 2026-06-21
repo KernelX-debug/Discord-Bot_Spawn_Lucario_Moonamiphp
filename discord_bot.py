@@ -9,135 +9,134 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-TOKEN = os.getenv("DISCORD_TOKEN")
+TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 GUILD_ID = 964202915868844042
 
 intents = discord.Intents.default()
 
 bot = commands.Bot(
-command_prefix="!",
-intents=intents
+    command_prefix="!",
+    intents=intents
 )
+
 
 def limpiar_html(texto):
-texto = html.unescape(str(texto))
-return re.sub(r"<[^>]+>", "", texto).strip()
+    texto = html.unescape(str(texto))
+    return re.sub(r"<[^>]+>", "", texto).strip()
+
 
 def extraer_coords(texto):
-match = re.search(r'data-clipboard-text="([^"]+)"', str(texto))
-return match.group(1) if match else ""
+    match = re.search(r'data-clipboard-text="([^"]+)"', str(texto))
+    return match.group(1) if match else ""
+
 
 def buscar_pokemon_iv100(nombre_busqueda, limite=5):
-url = "https://moonani.com/PokeList/ajax.php?page=pokemon&action=load"
+    url = "https://moonani.com/PokeList/ajax.php?page=pokemon&action=load"
 
-```
-payload = {
-    "iv": 100,
-    "pvp": 0,
-    "pokemons": "",
-    "start": 0,
-    "length": 250,
-    "draw": 1,
-}
+    payload = {
+        "iv": 100,
+        "pvp": 0,
+        "pokemons": "",
+        "start": 0,
+        "length": 250,
+        "draw": 1,
+    }
 
-headers = {
-    "Referer": "https://moonani.com/PokeList/index.php",
-    "Content-Type": "application/x-www-form-urlencoded",
-    "User-Agent": "Mozilla/5.0",
-}
+    headers = {
+        "Referer": "https://moonani.com/PokeList/index.php",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent": "Mozilla/5.0",
+    }
 
-r = requests.post(
-    url,
-    data=payload,
-    headers=headers,
-    timeout=20,
-)
-
-r.raise_for_status()
-
-data = r.json().get("data", [])
-
-resultados = []
-
-for pokemon in data:
-    nombre = limpiar_html(pokemon["Name"])
-
-    if nombre_busqueda.lower() not in nombre.lower():
-        continue
-
-    resultados.append(
-        {
-            "nombre": nombre,
-            "numero": pokemon["Number"],
-            "coords": extraer_coords(pokemon["Coords"]),
-            "cp": pokemon["CP"],
-            "nivel": pokemon["Level"],
-            "inicio": pokemon["Start Time"],
-            "fin": pokemon["End Time"],
-        }
+    r = requests.post(
+        url,
+        data=payload,
+        headers=headers,
+        timeout=20,
     )
 
-    if len(resultados) >= limite:
-        break
+    r.raise_for_status()
 
-return resultados
-```
+    data = r.json().get("data", [])
+
+    resultados = []
+
+    for pokemon in data:
+        nombre = limpiar_html(pokemon["Name"])
+
+        if nombre_busqueda.lower() not in nombre.lower():
+            continue
+
+        resultados.append(
+            {
+                "nombre": nombre,
+                "numero": pokemon["Number"],
+                "coords": extraer_coords(pokemon["Coords"]),
+                "cp": pokemon["CP"],
+                "nivel": pokemon["Level"],
+                "inicio": pokemon["Start Time"],
+                "fin": pokemon["End Time"],
+            }
+        )
+
+        if len(resultados) >= limite:
+            break
+
+    return resultados
+
 
 @bot.event
 async def on_ready():
-guild = discord.Object(id=GUILD_ID)
+    guild = discord.Object(id=GUILD_ID)
 
-```
-try:
-    synced = await bot.tree.sync(guild=guild)
-    print(f"Comandos sincronizados: {len(synced)}")
-except Exception as e:
-    print(e)
+    try:
+        synced = await bot.tree.sync(guild=guild)
+        print(f"Comandos sincronizados: {len(synced)}")
+    except Exception as e:
+        print(e)
 
-print(f"Conectado como {bot.user}")
-```
+    print(f"Conectado como {bot.user}")
+
 
 @bot.tree.command(
-name="pokemon",
-description="Buscar Pokemon IV100",
-guild=discord.Object(id=GUILD_ID)
+    name="pokemon",
+    description="Buscar Pokemon IV100"
 )
 @app_commands.describe(nombre="Nombre del pokemon")
 async def pokemon(
-interaction: discord.Interaction,
-nombre: str
+    interaction: discord.Interaction,
+    nombre: str
 ):
-await interaction.response.defer()
+    await interaction.response.defer()
 
-```
-try:
-    resultados = buscar_pokemon_iv100(nombre)
+    try:
+        resultados = buscar_pokemon_iv100(nombre)
 
-    if not resultados:
+        if not resultados:
+            await interaction.followup.send(
+                "No encontré resultados."
+            )
+            return
+
+        mensajes = []
+
+        for p in resultados:
+            mensajes.append(
+                f"🎯 **{p['nombre']}** #{p['numero']}\n"
+                f"📍 {p['coords']}\n"
+                f"⚡ CP {p['cp']} | Nivel {p['nivel']}\n"
+                f"⏱️ {p['inicio']} → {p['fin']}\n"
+                f"🗺️ https://maps.google.com/?q={p['coords']}"
+            )
+
         await interaction.followup.send(
-            "No encontré resultados."
-        )
-        return
-
-    mensajes = []
-
-    for p in resultados:
-        mensajes.append(
-            f"🎯 **{p['nombre']}** #{p['numero']}\n"
-            f"📍 {p['coords']}\n"
-            f"⚡ CP {p['cp']} | Nivel {p['nivel']}\n"
-            f"⏱️ {p['inicio']} → {p['fin']}\n"
-            f"🗺️ https://maps.google.com/?q={p['coords']}"
+            "\n\n".join(mensajes)
         )
 
-    await interaction.followup.send(
-        "\n\n".join(mensajes)
-    )
+    except Exception as e:
+        await interaction.followup.send(
+            f"Error: {e}"
+        )
 
-except Exception as e:
-    await interaction.followup.send(
-        f"Error: {e}"
-    )
-```
 
 bot.run(TOKEN)
