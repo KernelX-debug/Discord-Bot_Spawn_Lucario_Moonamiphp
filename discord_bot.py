@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
-GUILD_ID = 964202915868844042
+GUILD_ID = int(os.getenv("DISCORD_GUILD_ID"))
 
 intents = discord.Intents.default()
 
@@ -87,10 +87,8 @@ def buscar_pokemon_iv100(nombre_busqueda, limite=5):
 
 @bot.event
 async def on_ready():
-    guild = discord.Object(id=GUILD_ID)
-
     try:
-        synced = await bot.tree.sync(guild=guild)
+        synced = await bot.tree.sync(guild=GUILD)
         print(f"Comandos sincronizados: {len(synced)}")
     except Exception as e:
         print(e)
@@ -98,10 +96,14 @@ async def on_ready():
     print(f"Conectado como {bot.user}")
 
 
+GUILD = discord.Object(id=GUILD_ID)
+
 @bot.tree.command(
     name="pokemon",
-    description="Buscar Pokemon IV100"
+    description="Buscar Pokemon IV100",
+    guild=GUILD
 )
+
 @app_commands.describe(nombre="Nombre del pokemon")
 async def pokemon(
     interaction: discord.Interaction,
