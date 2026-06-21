@@ -55,6 +55,10 @@ def buscar_pokemon_iv100(nombre_busqueda, limite=5):
         timeout=20,
     )
 
+    print("STATUS:", r.status_code)
+    print("HEADERS:", r.headers)
+    print("BODY:", r.text[:1000])
+
     r.raise_for_status()
 
     data = r.json().get("data", [])
