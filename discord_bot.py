@@ -401,7 +401,7 @@ def register_commands(bot: LucarioDiscordBot) -> None:
             lines.append(
                 f"{index}. {spawn.name} (#{spawn.number})\n"
                 f"Coords: `{spawn.coords}`\n"
-                f"Maps: {spawn.maps_url}\n"
+                f"Maps: <{spawn.maps_url}>\n"
                 f"IV: {spawn.iv_percent}% | CP: {spawn.cp} | Fin: {spawn.end_time}"
             )
 
@@ -475,7 +475,7 @@ def register_commands(bot: LucarioDiscordBot) -> None:
             lines.append(
                 f"{index}. {spawn.name} (#{spawn.number})\n"
                 f"Coords: `{spawn.coords}`\n"
-                f"Maps: {spawn.maps_url}\n"
+                f"Maps: <{spawn.maps_url}>\n"
                 f"IV: {spawn.iv_percent}% | CP: {spawn.cp} | Fin: {spawn.end_time}"
             )
 
